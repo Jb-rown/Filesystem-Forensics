@@ -1,21 +1,12 @@
 # 📁 Filesystem Forensics Tool (`fs_tool`)
 
-![GitHub repo](https://img.shields.io/badge/GitHub-Filesystem--Forensics-blue?logo=github)
-![License](https://img.shields.io/badge/License-MIT-green)
+`fs_tool` is a command-line utility for analyzing and recovering data from ext4 filesystems. It provides functionality to list directory contents with metadata, scan devices for ext4 signatures, identify deleted files, and recover deleted files using inode numbers.
 
-`fs_tool` is a command-line utility for analyzing and recovering data from **ext4** filesystems. It offers four key features:
 
 - 📋 **Directory Listing**: Displays metadata (timestamps, immutability) for directory contents.
 - 🔍 **Device Scanning**: Detects ext4 signatures on block devices.
 - 🗑️ **Deleted File Detection**: Identifies deleted files via inode table scanning.
 - 🔄 **File Recovery**: Reconstructs deleted files using inode numbers.
-
-This README provides detailed instructions for setting up and testing `fs_tool` in a Linux environment (e.g., Ubuntu on WSL or native Linux). It includes step-by-step setup, test cases with expected outputs (assuming successful execution), troubleshooting tips, and notes for users of the `Filesystem_Forensics` repository.
-
-🌐 **Repository**: [github.com/your-username/Filesystem-Forensics](https://github.com/your-username/Filesystem-Forensics)  
-📍 **Local Path**: `~/fs_forensics/fs_forensics`
-
-> **Note**: Replace `your-username` with your GitHub username in the repository link. If using VS Code, install the “Markdown All in One” extension and preview with `Ctrl+Shift+V`.
 
 ---
 
@@ -37,7 +28,6 @@ This README provides detailed instructions for setting up and testing `fs_tool` 
 
 `fs_tool` is a forensics tool for ext4 filesystems, enabling users to inspect directory metadata, scan devices, detect deleted files, and recover them. Built with C and low-level system calls (e.g., `statx`, `getdents64`, `pread`), it’s ideal for learning filesystem internals and performing data recovery.
 
-This guide assumes you’re working in `~/fs_forensics/fs_forensics` as the `root` user, with the local repository `Filesystem_Forensics`. Tests are designed for a 100MB ext4 filesystem on `/dev/loop2`, with outputs based on April 19, 2025.
 
 ---
 
@@ -117,15 +107,14 @@ The `Filesystem_Forensics` repository, located at `~/fs_forensics/fs_forensics`,
 
 ## 🚀 Setup Instructions
 
-Follow these steps to set up and test `fs_tool`. Run commands as `root` in `~/fs_forensics/fs_forensics`.
-
+Follow these steps to set up and test `fs_tool`. 
 ### 1. Clone the Repository
 
 Clone the GitHub repository (if not already local):
 
 ```bash
-git clone https://github.com/your-username/Filesystem-Forensics.git ~/fs_forensics/fs_forensics
-cd ~/fs_forensics/fs_forensics
+git clone https://github.com/Jb-rown/Filesystem-Forensics.git
+cd Filesystem_ Forensics
 ```
 
 > **VS Code**: Open the repository with `code .`.
@@ -153,6 +142,7 @@ Build the executable:
 ```bash
 make
 ```
+This generates the `fs_tool` executable.
 
 **Expected Output**:
 
@@ -179,7 +169,8 @@ fs_tool
 
 ### 4. Create a Test Filesystem
 
-Create a 100MB ext4 image:
+ Create a 100MB ext4 filesystem image for testing:
+
 
 ```bash
 dd if=/dev/zero of=test.img bs=1M count=100
@@ -217,7 +208,7 @@ test.img: Linux rev 1.0 ext4 filesystem data, UUID=...
 
 ### 5. Set Up a Loop Device
 
-Attach `test.img` to a loop device:
+Attach `test.img` to a loop device (e.g., `/dev/loop2`):
 
 ```bash
 losetup -fP test.img
@@ -236,7 +227,7 @@ Use `/dev/loop2` (or the assigned device) in tests.
 
 ### 6. Prepare a Deleted File
 
-Create, delete, and unmount a test file:
+Mount the filesystem, Create, delete, and unmount a test file:
 
 ```bash
 mkdir -p /mnt/testfs
@@ -254,7 +245,7 @@ umount /mnt/testfs
 
 ## 🧪 Test Cases and Expected Outputs
 
-Run these tests as `root` in `~/fs_forensics/fs_forensics`. Outputs assume successful execution on April 19, 2025.
+Run these tests as `root` in `Filesystem_ Forensics`. 
 
 ### Test 1: Directory Listing and Metadata
 
@@ -289,9 +280,12 @@ Found: fs_tool
 Found: test.img
 ```
 
-**Description**: Lists directory contents with timestamps (Unix epoch seconds) and immutability status.
+- **Description**: Displays timestamps (Unix epoch seconds, e.g., `1742581200` ≈ April 19, 2025), immutability status (`NOT immutable`), and all files in the directory.
+- **Notes**: Timestamps vary based on system time and file activity.
+
 
 ### Test 2: Scan Device for ext4 Signatures
+Scan the loop device for ext4 filesystem signatures.
 
 **Command**:
 
@@ -305,10 +299,12 @@ Found: test.img
 [+] Found ext4 signature at offset: 1024 + 56 = 1080
 ```
 
-**Description**: Detects the ext4 superblock magic number (`0xEF53`) at offset 1080.
+- **Description**: Detects the ext4 superblock magic number (`0xEF53`) at offset 1080 (superblock start at 1024 + 56 bytes).
+- **Notes**: Confirms `test.img` is a valid ext4 filesystem.
+
 
 ### Test 3: List Deleted Files
-
+Identify deleted files by scanning the inode table.
 **Command**:
 
 ```bash
@@ -321,9 +317,11 @@ Found: test.img
 [Deleted] Inode #12 | Deleted At: Sat Apr 19 14:30:00 2025
 ```
 
-**Description**: Lists inodes with non-zero `i_dtime`. Inode `12` corresponds to `testfile.txt`.
+- **Description**: Lists inodes with non-zero deletion times (`i_dtime`). Inode `12` is typical for the first user file (`testfile.txt`).
+- **Notes**: Inode number and deletion time depend on filesystem allocation and when `rm` was executed.
 
 ### Test 4: Recover a Deleted File
+Recover the deleted file using its inode number (e.g., `12` from Test 3).
 
 **Command**:
 
@@ -350,13 +348,14 @@ cat recovered_file.txt
 Hello, this is a test file!
 ```
 
-**Description**: Recovers 27 bytes from inode `12` to `recovered_file.txt`.
+- **Description**: Reconstructs the file from inode `12`, writing 27 bytes (26 characters + newline) to `recovered_file.txt`.
+- **Notes**: Recovery assumes direct blocks; larger files with indirect blocks may require code updates.
 
 ---
 
 ## 🧹 Cleanup
 
-Remove temporary files and detach the loop device:
+After testing, remove temporary files and detach the loop device:
 
 ```bash
 losetup -d /dev/loop2
@@ -394,9 +393,9 @@ rm -f *.o fs_tool
 
 ## 📝 Notes
 
-- **Inode Numbers**: Typically 11–15 for user files.
+- **Inode Numbers**: Vary by filesystem (typically 11–15 for user files).
 - **Timestamps**: Reflect system time (e.g., April 19, 2025).
-- **Ext4 Assumptions**: 256-byte inodes, 4096-byte blocks.
+- **Ext4 Assumptions**: The tool assumes 256-byte inodes and 4096-byte blocks, standard for modern ext4.
 - **Limitations**: Recovery limited to direct blocks (48KB). Indirect blocks not supported.
 
 **VS Code Tips**:
@@ -410,7 +409,7 @@ rm -f *.o fs_tool
 
 Contributions to `Filesystem-Forensics` are welcome! To contribute:
 
-1. Fork the repository: [github.com/your-username/Filesystem-Forensics](https://github.com/your-username/Filesystem-Forensics).
+1. Fork the repository: [github.com/your-username/Filesystem-Forensics](https://github.com/Jb-rown/Filesystem-Forensics).
 2. Create a branch: `git checkout -b feature/your-feature`.
 3. Commit changes: `git commit -m "Add your feature"`.
 4. Push: `git push origin feature/your-feature`.
