@@ -51,10 +51,10 @@ void list_dir(const char *path) {
 
 int main(int argc, char *argv[]) {
     if (argc == 3 && strcmp(argv[1], "--scan") == 0) {
-        scan_raw(argv[2]);  // Assuming declared in metadata.h
+        scan_raw(argv[2]);  
         return 0;
     } else if (argc == 3 && strcmp(argv[1], "--deleted") == 0) {
-        find_deleted(argv[2]);  // Also assumed declared in metadata.h
+        find_deleted(argv[2]);  
         return 0;
     } else if (argc == 5 && strcmp(argv[1], "--recover") == 0) {
         uint32_t inode_no = (uint32_t)atoi(argv[3]);
